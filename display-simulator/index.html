@@ -4,29 +4,32 @@
     <meta charset="utf-8" />
     <title>Display Simulator for ESPHome</title>
   </head>
-  <body>
-    <canvas id="display" width="0" height="0"></canvas>
+  <body style="font-family: Arial, Helvetica, sans-serif;">
+    <div id="display-container" style="background: #555; display: inline-block; overflow: hidden; margin-left: auto; margin-right: auto;">
+      <canvas id="display" width="0" height="0" style="display: block;"></canvas>
+      <div id="cursor_pos" style="color: #fff;"></div>
+    </div>
     <br/>
     <textarea id="code"  rows="30" style="width: 95%;" onchange="run_code()" onkeypress="run_code()" onpaste="run_code()" oninput="run_code()">
-// Draw a line from [0,0] to [100,50]
+// Draw a line from [0, 0] to [100, 50]
 it.line(0, 0, 100, 50);
 
-// Draw the outline of a rectangle with the top left at [5,50], a width of 30 and a height of 12
+// Draw the outline of a rectangle with the top left at [5, 50], a width of 30 and a height of 12
 it.rectangle(5, 50, 30, 12);
 // Draw the same rectangle, but this time filled.
 it.filled_rectangle(40, 50, 30, 12);
 
-// Circles! Let's draw one with the center at [25,25] and a radius of 10
+// Circles! Let's draw one with the center at [25, 25] and a radius of 10
 it.circle(25, 25, 10);
 // ... and the same thing filled again
 it.filled_circle(90, 25, 10);
 
-// Triangles... Let's draw the outline of a triangle from the [x,y] coordinates of its three points
+// Triangles... Let's draw the outline of a triangle from the [x, y] coordinates of its three points
 it.triangle(25, 5, 5, 25, 50, 50);
 // and a filled triangle !
 it.filled_triangle(125, 5, 105, 25, 120, 50);
 
-// Turn a single pixel off at [50,55]
+// Turn a single pixel off at [50, 55]
 it.draw_pixel_at(50, 55, COLOR_OFF);
 
 // Turn off a whole display portion.
@@ -35,7 +38,7 @@ it.rectangle(50, 58, 8, 4, COLOR_OFF);
 // Draw a circle in the middle of the display
 it.circle(it.get_width() / 2, it.get_height() / 2, 16);
     </textarea>
-    <script type='text/javascript'>
+    <script type="text/javascript">
 "use strict";
 
 class Display {
@@ -306,7 +309,8 @@ class CanvasDisplay extends Display {
         this.canvas.height = height_pixels * this.scale;
         this.canvas.style.width = this.canvas.width;
         this.canvas.style.height = this.canvas.height;
-        this.canvas.style.border = (2 * this.scale) + "px solid #888";
+        this.canvas.style.margin = (2 * this.scale) + "px";
+        this.canvas.dataset.scale = this.scale;
         this.ctx = canvas.getContext("2d");
         this.ctx.imageSmoothingEnabled = false;
         this.ctx.fillStyle = this.COLOR_OFF;
@@ -343,8 +347,8 @@ function run_code() {
 run_code();
 
 // Tab indentation
-document.getElementById('code').addEventListener('keydown', function(e) {
-    if (e.key == 'Tab') {
+document.getElementById("code").addEventListener("keydown", function(e) {
+    if (e.key == "Tab") {
         e.preventDefault();
 
         let tab = "  ";
@@ -406,6 +410,19 @@ document.getElementById('code').addEventListener('keydown', function(e) {
         this.selectionEnd = new_end;
     }
 });
+
+// Cursor position
+document.getElementById("display").addEventListener("mousemove", function(evt) {
+    let display = document.getElementById("display");
+    let cursor_pos = document.getElementById("cursor_pos");
+    let rect = display.getBoundingClientRect();
+    let x = Math.floor((evt.clientX - rect.left) / display.dataset.scale);
+    let y = Math.floor((evt.clientY - rect.top) / display.dataset.scale);
+    cursor_pos.textContent = x + ", " + y;
+    cursor_pos.style.margin = (2 * display.dataset.scale) + "px";
+    cursor_pos.style.marginTop = (-1.5 * display.dataset.scale) + "px";
+    cursor_pos.style.marginBottom = (0.5 * display.dataset.scale) + "px";
+}, false);
     </script>
     <p>Contains code from ESPHome licensed under <a href="https://www.gnu.org/licenses/gpl-3.0.en.html">GNU GPL Version 3</a></p>
   </body>
