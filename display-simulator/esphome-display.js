@@ -255,14 +255,55 @@ class Display {
         } else if (y1 == y2) { // Check for special case of a top-flat triangle
             this.filled_flat_side_triangle_(x3, y3, x1, y1, x2, y2, color);
         } else { // General case: split the no-flat-side triangle in a top-flat triangle and bottom-flat triangle
-            let x_temp = Math.floor(x1 + ((y2 - y1) / (y3 - y1)) * (x3 - x1)),
+            let x_temp = Math.floor(x1 + Math.floor((y2 - y1) / (y3 - y1)) * (x3 - x1)),
                 y_temp = y2;
             this.filled_flat_side_triangle_(x1, y1, x2, y2, x_temp, y_temp, color);
             this.filled_flat_side_triangle_(x3, y3, x2, y2, x_temp, y_temp, color);
         }
     }
 
-    image(x, y, image, align = Image.TOP_LEFT, color_on = this.COLOR_ON, color_off = this.COLOR_OFF) {
+    print(x, y, font, arg4, arg5 = null, arg6 = null) {
+        let color = this.COLOR_ON;
+        let align = Font.TOP_LEFT;
+        let text;
+        if (arg5 === null && arg6 === null) {
+            text = arg4;
+        } else if (arg6 === null) {
+            if (typeof(arg4) == "number") {
+                align = arg4;
+            } else {
+                color = arg4;
+            }
+            text = arg5;
+        } else {
+            color = arg4;
+            align = arg5;
+            text = arg6;
+        }
+        x = Math.floor(x);
+        y = Math.floor(y);
+        let [x_start, y_start, width, height] = this.get_text_bounds(x, y, text, font, align);
+        font.print(x_start, y_start, this, color, text);
+    }
+
+    image(x, y, image, arg4 = null, arg5 = null, arg6 = null) {
+        let align = Image.TOP_LEFT;
+        let color_on = this.COLOR_ON;
+        let color_off = this.COLOR_OFF
+        if (typeof(arg4) == "number") {
+            align = arg4;
+            if (arg5 !== null) {
+                color_on = arg5;
+                if (arg6 !== null) {
+                    color_off = arg6;
+                }
+            }
+        } else if (arg4 !== null) {
+            color_on = arg4;
+            if (arg5 !== null) {
+                color_off = arg5;
+            }
+        }
         x = Math.floor(x);
         y = Math.floor(y);
         let x_align = Math.floor(align) & Image.HORIZONTAL_ALIGNMENT;
@@ -293,5 +334,44 @@ class Display {
         }
 
         image.draw(x, y, this, color_on, color_off);
+    }
+
+    get_text_bounds(x, y, text, font, align) {
+        let [width, x_offset, baseline, height] = font.measure(text);
+
+        let x_align = Math.floor(align) & 0x18;
+        let y_align = Math.floor(align) & 0x07;
+        let x1, y1;
+
+        switch (x_align) {
+            case Font.RIGHT:
+                x1 = x - width;
+                break;
+            case Font.CENTER_HORIZONTAL:
+                x1 = x - Math.floor(width / 2);
+                break;
+            case Font.LEFT:
+            default:
+                // LEFT
+                x1 = x;
+                break;
+        }
+
+        switch (y_align) {
+            case Font.BOTTOM:
+                y1 = y - height;
+                break;
+            case Font.BASELINE:
+                y1 = y - baseline;
+                break;
+            case Font.CENTER_VERTICAL:
+                y1 = y - Math.floor(height / 2);
+                break;
+            case Font.TOP:
+            default:
+                y1 = y;
+                break;
+        }
+        return [x1, y1, width, height];
     }
 }
