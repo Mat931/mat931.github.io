@@ -9,7 +9,15 @@ class Color {
 
 class Display {
     // Code in this class was taken from esphome/components/display/display.cpp and translated to JavaScript
-    constructor() {}
+    static DISPLAY_ROTATION_0_DEGREES = 0;
+    static DISPLAY_ROTATION_90_DEGREES = 90;
+    static DISPLAY_ROTATION_180_DEGREES = 180;
+    static DISPLAY_ROTATION_270_DEGREES = 270;
+
+    constructor() {
+        this.rotation_ = Display.DISPLAY_ROTATION_0_DEGREES;
+        this.clipping_rectangle_ = [];
+    }
 
     fill(color) {
         this.filled_rectangle(0, 0, this.get_width(), this.get_height(), color);
@@ -255,7 +263,7 @@ class Display {
         } else if (y1 == y2) { // Check for special case of a top-flat triangle
             this.filled_flat_side_triangle_(x3, y3, x1, y1, x2, y2, color);
         } else { // General case: split the no-flat-side triangle in a top-flat triangle and bottom-flat triangle
-            let x_temp = Math.floor(x1 + Math.floor((y2 - y1) / (y3 - y1)) * (x3 - x1)),
+            let x_temp = Math.floor(x1 + ((y2 - y1) / (y3 - y1)) * (x3 - x1)),
                 y_temp = y2;
             this.filled_flat_side_triangle_(x1, y1, x2, y2, x_temp, y_temp, color);
             this.filled_flat_side_triangle_(x3, y3, x2, y2, x_temp, y_temp, color);
@@ -373,5 +381,122 @@ class Display {
                 break;
         }
         return [x1, y1, width, height];
+    }
+
+    start_clipping(left, top = null, right = null, bottom = null) {
+        let rect = left;
+        if (typeof(rect) == "number") {
+            rect = new Rect(left, top, right - left, bottom - top);
+        }
+        if (this.clipping_rectangle_.length > 0) {
+            r = this.clipping_rectangle_[this.clipping_rectangle_.length - 1];
+            rect.shrink(r);
+        }
+        this.clipping_rectangle_.push(rect);
+    }
+
+    extend_clipping(left, top = null, right = null, bottom = null) {
+        let add_rect = left;
+        if (typeof(add_rect) == "number") {
+            add_rect = new Rect(left, top, right - left, bottom - top);
+        }
+        if (this.clipping_rectangle_.length == 0) {
+            console.error("add: Clipping is not set.");
+        } else {
+            this.clipping_rectangle_[this.clipping_rectangle_.length - 1].extend(add_rect);
+        }
+    }
+
+    shrink_clipping(left, top = null, right = null, bottom = null) {
+        let add_rect = left;
+        if (typeof(add_rect) == "number") {
+            add_rect = new Rect(left, top, right - left, bottom - top);
+        }
+        if (this.clipping_rectangle_.length == 0) {
+            console.error("shrink: Clipping is not set.");
+        } else {
+            this.clipping_rectangle_[this.clipping_rectangle_.length - 1].shrink(add_rect);
+        }
+    }
+
+    end_clipping() {
+        if (this.clipping_rectangle_.length == 0) {
+            console.error("clear: Clipping is not set.");
+        } else {
+            this.clipping_rectangle_.pop();
+        }
+    }
+
+    get_clipping() {
+        if (this.clipping_rectangle_.length == 0) {
+            return new Rect();
+        } else {
+            return this.clipping_rectangle_[this.clipping_rectangle_.length - 1];
+        }
+    }
+
+    is_clipping() {
+        return this.clipping_rectangle_.length > 0;
+    }
+
+    clip(x, y) {
+        x = Math.floor(x);
+        y = Math.floor(y);
+        if (x < 0 || x >= this.get_width() || y < 0 || y >= this.get_height())
+            return false;
+        if (!this.get_clipping().inside(x, y))
+            return false;
+        return true;
+    }
+}
+
+class DisplayBuffer extends Display {
+    // Code in this class was taken from esphome/components/display/display_buffer.cpp and translated to JavaScript
+
+    get_width() {
+        switch (this.rotation_) {
+            case Display.DISPLAY_ROTATION_90_DEGREES:
+            case Display.DISPLAY_ROTATION_270_DEGREES:
+                return this.get_height_internal();
+            case Display.DISPLAY_ROTATION_0_DEGREES:
+            case Display.DISPLAY_ROTATION_180_DEGREES:
+            default:
+                return this.get_width_internal();
+        }
+    }
+
+    get_height() {
+        switch (this.rotation_) {
+            case Display.DISPLAY_ROTATION_0_DEGREES:
+            case Display.DISPLAY_ROTATION_180_DEGREES:
+                return this.get_height_internal();
+            case Display.DISPLAY_ROTATION_90_DEGREES:
+            case Display.DISPLAY_ROTATION_270_DEGREES:
+            default:
+                return this.get_width_internal();
+        }
+    }
+
+    draw_pixel_at(x, y, color) {
+        if (!this.get_clipping().inside(x, y))
+            return;
+
+        switch (this.rotation_) {
+            case Display.DISPLAY_ROTATION_0_DEGREES:
+                break;
+            case Display.DISPLAY_ROTATION_90_DEGREES:
+                [x, y] = [y, x];
+                x = this.get_width_internal() - x - 1;
+                break;
+            case Display.DISPLAY_ROTATION_180_DEGREES:
+                x = this.get_width_internal() - x - 1;
+                y = this.get_height_internal() - y - 1;
+                break;
+            case Display.DISPLAY_ROTATION_270_DEGREES:
+                [x, y] = [y, x];
+                y = this.get_height_internal() - y - 1;
+                break;
+        }
+        this.draw_absolute_pixel_internal(x, y, color);
     }
 }

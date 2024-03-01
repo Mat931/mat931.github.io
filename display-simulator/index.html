@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <title>Display Simulator for ESPHome</title>
     <script type="application/javascript" src="esphome-display.js"></script>
+    <script type="application/javascript" src="esphome-rect.js"></script>
     <script type="application/javascript" src="esphome-image.js"></script>
     <script type="application/javascript" src="esphome-font.js"></script>
   </head>
@@ -56,7 +57,7 @@ it.circle(it.get_width() / 2, it.get_height() / 2, 16);
     <script type="text/javascript">
 "use strict";
 
-class CanvasDisplay extends Display {
+class CanvasDisplay extends DisplayBuffer {
     constructor(canvas, width_pixels, height_pixels, scale = 1, pixel_border = 0, color_off = "#000", color_on = "#fff") {
         super();
         this.canvas = canvas;
@@ -75,13 +76,13 @@ class CanvasDisplay extends Display {
         this.ctx.fillStyle = this.COLOR_OFF;
         this.ctx.fillRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
     }
-    get_width() {
+    get_width_internal() {
         return this.canvas.width / this.scale;
     }
-    get_height() {
+    get_height_internal() {
         return this.canvas.height / this.scale;
     }
-    draw_pixel_at(x, y, color = this.COLOR_ON) {
+    draw_absolute_pixel_internal(x, y, color = this.COLOR_ON) {
         x = Math.floor(x);
         y = Math.floor(y);
         this.ctx.fillStyle = this.COLOR_OFF;
@@ -251,10 +252,11 @@ class ResourceManager {
             count++;
         }
         for (const [key, value] of Object.entries(fonts)) {
+            let glyphs = (value["data_nr"] == 1) ? "glyph" : "glyphs";
             if (key in this.resources) {
-                alert("Replacing existing resource \"" + key + "\" with font (" + value["data_nr"] + " glyphs, size " + (value["baseline"] + 1) + ")");
+                alert("Replacing existing resource \"" + key + "\" with font (" + value["data_nr"] + " " + glyphs + ", size " + value["baseline"] + ")");
             } else {
-                alert("Loading new font resource \"" + key + "\" (" + value["data_nr"] + " glyphs, size " + (value["baseline"] + 1) + ")");
+                alert("Loading new font resource \"" + key + "\" (" + value["data_nr"] + " " + glyphs + ", size " + value["baseline"] + ")");
             }
             this.resources[key] = value;
         }
@@ -416,6 +418,10 @@ document.getElementById("display").addEventListener("mousemove", function(e) {
     status_message.style.marginBottom = (0.5 * display.dataset.scale) + "px";
 }, false);
     </script>
-    <p>This project contains code from <a href="https://esphome.io/">ESPHome</a> licensed under <a href="https://www.gnu.org/licenses/gpl-3.0.en.html">GNU GPL Version 3</a></p>
+    <p>
+      <a href="https://github.com/Mat931/mat931.github.io">Project repository</a>
+      <br/>
+      This project contains code from <a href="https://esphome.io/">ESPHome</a> licensed under <a href="https://www.gnu.org/licenses/gpl-3.0.en.html">GNU GPL Version 3</a>
+    </p>
   </body>
 </html>
