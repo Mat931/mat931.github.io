@@ -41,7 +41,7 @@ it.rectangle(50, 58, 8, 4, COLOR_OFF);
 
 // Draw a circle in the middle of the display
 it.circle(it.get_width() / 2, it.get_height() / 2, 16);
-    </textarea>
+</textarea>
     <p>
       Display Dimensions: 
       <input type="text" inputmode="numeric" id="display_width" value="128" onchange="run_code()" onkeypress="run_code()" onpaste="run_code()" oninput="run_code()" style="width: 3em;">
@@ -58,7 +58,7 @@ it.circle(it.get_width() / 2, it.get_height() / 2, 16);
 "use strict";
 
 class CanvasDisplay extends DisplayBuffer {
-    constructor(canvas, width_pixels, height_pixels, scale = 1, pixel_border = 0, color_off = "#000", color_on = "#fff") {
+    constructor(canvas, width_pixels, height_pixels, scale = 1, pixel_border = 0, color_off = new Color(0, 0, 0), color_on = new Color(255, 255, 255), bg_color = "#444") {
         super();
         this.canvas = canvas;
         this.scale = scale * window.devicePixelRatio;
@@ -73,7 +73,7 @@ class CanvasDisplay extends DisplayBuffer {
         this.canvas.dataset.scale = this.scale;
         this.ctx = canvas.getContext("2d");
         this.ctx.imageSmoothingEnabled = false;
-        this.ctx.fillStyle = this.COLOR_OFF;
+        this.ctx.fillStyle = `rgb(${this.COLOR_OFF.r} ${this.COLOR_OFF.g} ${this.COLOR_OFF.b})`;
         this.ctx.fillRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
     }
     get_width_internal() {
@@ -85,13 +85,9 @@ class CanvasDisplay extends DisplayBuffer {
     draw_absolute_pixel_internal(x, y, color = this.COLOR_ON) {
         x = Math.floor(x);
         y = Math.floor(y);
-        this.ctx.fillStyle = this.COLOR_OFF;
+        this.ctx.fillStyle = `rgb(${this.COLOR_OFF.r} ${this.COLOR_OFF.g} ${this.COLOR_OFF.b})`;
         this.ctx.fillRect(x * this.scale, y * this.scale, this.scale, this.scale);
-        if (typeof(color) == "string") {
-            this.ctx.fillStyle = color;
-        } else {
-            this.ctx.fillStyle = `rgb(${color.r} ${color.g} ${color.b})`;
-        }
+        this.ctx.fillStyle = `rgb(${color.r} ${color.g} ${color.b})`;
         this.ctx.fillRect(x * this.scale + this.pixel_border, y * this.scale + this.pixel_border, this.scale - 2 * this.pixel_border, this.scale - 2 * this.pixel_border);
     }
 }
@@ -104,8 +100,8 @@ class ResourceManager {
         this.image_init_regex = /(?<image_id>[A-Za-z_][A-Za-z0-9_]*)[ \t]*=[ \t]*new[ \t]*image::Image\((?<data_id>[A-Za-z_][A-Za-z0-9_]*)[ \t]*,[ \t]*(?<width>[0-9]+)[ \t]*,[ \t]*(?<height>[0-9]+)[ \t]*,[ \t]*image::(?<type>[A-Z0-9_]*)[ \t]*\);/gm;
         this.image_transparency_regex = /(?<image_id>[A-Za-z_][A-Za-z0-9_]*)[ \t]*->set_transparency\([[ \t]*(?<transparent>(true|false))[[ \t]*\);/gm;
         this.glyphdata_array_regex = /(((static)|(const))[ \t]+)+(font::GlyphData)[ \t]+(?<data_id>[A-Za-z_][A-Za-z0-9_]*)\[[0-9]*\][ \t]*(PROGMEM[ \t]*)?=[ \t\n]*{[ \t\n]*(?<data>(.|\n)*?)[ \t\n]*};/gm;
-        this.glyphdata_regex = /font::GlyphData[ \t]*{[ \t\n]*\.a_char[ \t]*=[ \t]*"(?<a_char>.*?)"[ \t]*,[ \t\n]*\.data[ \t]*=[ \t]*(?<data_id>[A-Za-z_][A-Za-z0-9_]*)[ \t\n]*\+[ \t\n]*(?<data_offset>[0-9]*)[ \t]*,[ \t\n]*\.offset_x[ \t]*=[ \t]*(?<offset_x>[0-9\-]*)[ \t]*,[ \t\n]*\.offset_y[ \t]*=[ \t]*(?<offset_y>[0-9\-]*)[ \t]*,[ \t\n]*\.width[ \t]*=[ \t]*(?<width>[0-9]*)[ \t]*,[ \t\n]*\.height[ \t]*=[ \t]*(?<height>[0-9]*)[ \t]*,?[ \t\n]*}/gm;
-        this.font_init_regex = /(?<font_id>[A-Za-z_][A-Za-z0-9_]*)[ \t]*=[ \t]*new[ \t]*font::Font\((?<glyphdata_id>[A-Za-z_][A-Za-z0-9_]*)[ \t]*,[ \t]*(?<data_nr>[0-9]+)[ \t]*,[ \t]*(?<baseline>[0-9]+)[ \t]*,[ \t]*(?<height>[A-Z0-9_]*)[ \t]*\);/gm;
+        this.glyphdata_regex = /font::GlyphData[ \t]*{[ \t\n]*\.a_char[ \t]*=[ \t]*(\([ \t]*(const)?[ \t]*(uint8_t[ \t]*\*)?[ \t]*\))?[ \t]*"(?<a_char>.*?)"[ \t]*,[ \t\n]*\.data[ \t]*=[ \t]*(?<data_id>[A-Za-z_][A-Za-z0-9_]*)[ \t\n]*\+[ \t\n]*(?<data_offset>[0-9]*)[ \t]*,[ \t\n]*\.offset_x[ \t]*=[ \t]*(?<offset_x>[0-9\-]*)[ \t]*,[ \t\n]*\.offset_y[ \t]*=[ \t]*(?<offset_y>[0-9\-]*)[ \t]*,[ \t\n]*\.width[ \t]*=[ \t]*(?<width>[0-9]*)[ \t]*,[ \t\n]*\.height[ \t]*=[ \t]*(?<height>[0-9]*)[ \t]*,?[ \t\n]*}/gm;
+        this.font_init_regex = /(?<font_id>[A-Za-z_][A-Za-z0-9_]*)[ \t]*=[ \t]*new[ \t]*font::Font\((?<glyphdata_id>[A-Za-z_][A-Za-z0-9_]*)[ \t]*,[ \t]*(?<data_nr>[0-9]+)[ \t]*,[ \t]*(?<baseline>[0-9]+)[ \t]*,[ \t]*(?<height>[0-9]+)[ \t]*,[ \t]*(?<bpp>[0-9]+)[ \t]*\);/gm;
         this.octal_regex = /\\(?<octal>[0-7]{1,3})/gm;
         this.resources = {};
         this.file_input.onchange = e => {
@@ -120,7 +116,7 @@ class ResourceManager {
                 let count = this.load_images(content, data_arrays);
                 count += this.load_fonts(content, data_arrays);
                 if (count == 0) {
-                    alert("The selected file contains no supported resources.");
+                    alert("The selected file contains no supported resources. For fonts ESPHome version 2024.3 or later is required.");
                 }
                 run_code();
             }
@@ -198,6 +194,13 @@ class ResourceManager {
                     console.log("Data array not found, skipping glyph \"" + glyphdata["a_char"] + "\"");
                     continue;
                 }
+                let data_offset_next = data_arrays[groups["data_id"]].length - 1;
+                if (j < glyphdata_matches.length - 1) {
+                    let groups_next = glyphdata_matches[j + 1].groups;
+                    if (groups_next["data_id"] == groups["data_id"]) {
+                        data_offset_next = parseInt(groups_next["data_offset"]);
+                    }
+                }
                 let glyphdata = {};
                 let a_char = groups["a_char"]
                 if (a_char.startsWith("\\") && (a_char.length > 1)) {
@@ -214,7 +217,7 @@ class ResourceManager {
                 glyphdata["offset_y"] = parseInt(groups["offset_y"]);
                 glyphdata["width"] = parseInt(groups["width"]);
                 glyphdata["height"] = parseInt(groups["height"]);
-                let data_length = Math.ceil(glyphdata["width"] / 8) * glyphdata["height"];
+                let data_length = data_offset_next - parseInt(groups["data_offset"]);
                 let data = new Uint8Array(data_length);
                 for (let k = 0; k < data_length; k++) {
                     data[k] = data_arrays[groups["data_id"]][parseInt(groups["data_offset"]) + k];
@@ -248,6 +251,7 @@ class ResourceManager {
             }
             font["baseline"] = parseInt(groups["baseline"]);
             font["height"] = parseInt(groups["height"]);
+            font["bpp"] = parseInt(groups["bpp"]);;
             fonts[font["id"]] = font;
             count++;
         }
@@ -283,7 +287,7 @@ class ResourceManager {
                     obj.set_transparency(r["transparent"]);
                     return obj;
                 case "font":
-                    obj = new Font(r["data"], r["data_nr"], r["baseline"], r["height"]);
+                    obj = new Font(r["data"], r["data_nr"], r["baseline"], r["height"], r["bpp"]);
                     return obj;
             }
         }

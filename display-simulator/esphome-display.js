@@ -270,28 +270,35 @@ class Display {
         }
     }
 
-    print(x, y, font, arg4, arg5 = null, arg6 = null) {
+    print(x, y, font, arg4, arg5 = null, arg6 = null, arg7 = null) {
         let color = this.COLOR_ON;
+        let background = this.COLOR_OFF;
         let align = Font.TOP_LEFT;
         let text;
-        if (arg5 === null && arg6 === null) {
+        if (arg5 === null && arg6 === null && arg7 == null) {
             text = arg4;
-        } else if (arg6 === null) {
+        } else if (arg7 === null && typeof(arg6) != "string") {
             if (typeof(arg4) == "number") {
                 align = arg4;
             } else {
                 color = arg4;
+                if (arg6 !== null) {
+                    background = arg6;
+                }
             }
             text = arg5;
         } else {
             color = arg4;
             align = arg5;
             text = arg6;
+            if (arg7 !== null) {
+                background = arg7;
+            }
         }
         x = Math.floor(x);
         y = Math.floor(y);
         let [x_start, y_start, width, height] = this.get_text_bounds(x, y, text, font, align);
-        font.print(x_start, y_start, this, color, text);
+        font.print(x_start, y_start, this, color, text, background);
     }
 
     image(x, y, image, arg4 = null, arg5 = null, arg6 = null) {
