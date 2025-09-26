@@ -155,7 +155,12 @@ class Font {
                     }
                 }
             }
-            x_at += glyph.glyph_data_.width + glyph.glyph_data_.offset_x;
+            // Use advance if available (modern ESPHome format), otherwise fall back to width + offset_x
+            if (glyph.glyph_data_.advance !== undefined) {
+                x_at += glyph.glyph_data_.advance;
+            } else {
+                x_at += glyph.glyph_data_.width + glyph.glyph_data_.offset_x;
+            }
             i += match_length;
         }
     }
@@ -184,7 +189,12 @@ class Font {
             } else {
                 min_x = Math.min(min_x, x + glyph.glyph_data_.offset_x);
             }
-            x += glyph.glyph_data_.width + glyph.glyph_data_.offset_x;
+            // Use advance if available (modern ESPHome format), otherwise fall back to width + offset_x
+            if (glyph.glyph_data_.advance !== undefined) {
+                x += glyph.glyph_data_.advance;
+            } else {
+                x += glyph.glyph_data_.width + glyph.glyph_data_.offset_x;
+            }
 
             i += match_length;
             has_char = true;
