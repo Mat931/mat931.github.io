@@ -61,20 +61,43 @@ class CanvasDisplay extends DisplayBuffer {
     constructor(canvas, width_pixels, height_pixels, scale = 1, pixel_border = 0, color_off = new Color(0, 0, 0), color_on = new Color(255, 255, 255), bg_color = "#444") {
         super();
         this.canvas = canvas;
-        this.scale = scale * window.devicePixelRatio;
-        this.pixel_border = (1 - pixel_border) * this.scale;
+        this.width_pixels = width_pixels;
+        this.height_pixels = height_pixels;
+        this.base_scale = scale;
+        this.pixel_border_ratio = pixel_border;
         this.COLOR_OFF = color_off;
         this.COLOR_ON = color_on;
-        this.canvas.width = width_pixels * this.scale;
-        this.canvas.height = height_pixels * this.scale;
-        this.canvas.style.width = this.canvas.width;
-        this.canvas.style.height = this.canvas.height;
-        this.canvas.style.margin = (2 * this.scale) + "px";
+        this.updateScale();
         this.canvas.dataset.scale = this.scale;
         this.ctx = canvas.getContext("2d");
         this.ctx.imageSmoothingEnabled = false;
         this.ctx.fillStyle = `rgb(${this.COLOR_OFF.r} ${this.COLOR_OFF.g} ${this.COLOR_OFF.b})`;
         this.ctx.fillRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+    }
+    updateScale() {
+        // Calculate scale to fit within 90% of window width
+        const maxWidth = window.innerWidth * 0.9;
+        const displayScale = Math.min(this.base_scale, Math.max(1, Math.floor(maxWidth / this.width_pixels)));
+
+        // Internal canvas scale includes device pixel ratio for sharp rendering
+        this.scale = displayScale * window.devicePixelRatio;
+        this.pixel_border = (1 - this.pixel_border_ratio) * this.scale;
+
+        // Set canvas internal resolution (high for sharp rendering)
+        this.canvas.width = this.width_pixels * this.scale;
+        this.canvas.height = this.height_pixels * this.scale;
+
+        // Set CSS display size (what user sees)
+        this.canvas.style.width = (this.width_pixels * displayScale) + "px";
+        this.canvas.style.height = (this.height_pixels * displayScale) + "px";
+        this.canvas.style.margin = (2 * displayScale) + "px";
+        this.canvas.dataset.displayScale = displayScale;
+
+        // Clear and redraw background
+        if (this.ctx) {
+            this.ctx.fillStyle = `rgb(${this.COLOR_OFF.r} ${this.COLOR_OFF.g} ${this.COLOR_OFF.b})`;
+            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        }
     }
     get_width_internal() {
         return this.canvas.width / this.scale;
@@ -336,11 +359,22 @@ function run_code() {
         let status_message = document.getElementById("status_message");
         status_message.textContent = "Error in line " + e.lineNumber + ": " + e.message;
         status_message.style.color = "#f00";
-        status_message.style.margin = (2 * display.dataset.scale) + "px";
-        status_message.style.marginTop = (-1.5 * display.dataset.scale) + "px";
-        status_message.style.marginBottom = (0.5 * display.dataset.scale) + "px";
+        let displayScale = parseFloat(display.dataset.displayScale) || 1;
+        status_message.style.margin = (2 * displayScale) + "px";
+        status_message.style.marginTop = (-1.5 * displayScale) + "px";
+        status_message.style.marginBottom = (0.5 * displayScale) + "px";
     }
 }
+
+// Add window resize listener for auto-scaling
+window.addEventListener('resize', () => {
+    // Debounce resize events
+    clearTimeout(window.resizeTimeout);
+    window.resizeTimeout = setTimeout(() => {
+        run_code();
+    }, 100);
+});
+
 run_code();
 
 // Tab indentation
@@ -413,13 +447,17 @@ document.getElementById("display").addEventListener("mousemove", function(e) {
     let display = document.getElementById("display");
     let status_message = document.getElementById("status_message");
     let rect = display.getBoundingClientRect();
-    let x = Math.floor((e.clientX - rect.left) / display.dataset.scale);
-    let y = Math.floor((e.clientY - rect.top) / display.dataset.scale);
+
+    // Use the stored display scale
+    let displayScale = parseFloat(display.dataset.displayScale) || 1;
+
+    let x = Math.floor((e.clientX - rect.left) / displayScale);
+    let y = Math.floor((e.clientY - rect.top) / displayScale);
     status_message.textContent = x + ", " + y;
     status_message.style.color = "#fff";
-    status_message.style.margin = (2 * display.dataset.scale) + "px";
-    status_message.style.marginTop = (-1.5 * display.dataset.scale) + "px";
-    status_message.style.marginBottom = (0.5 * display.dataset.scale) + "px";
+    status_message.style.margin = (2 * displayScale) + "px";
+    status_message.style.marginTop = (-1.5 * displayScale) + "px";
+    status_message.style.marginBottom = (0.5 * displayScale) + "px";
 }, false);
     </script>
     <p>
