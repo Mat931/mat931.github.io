@@ -301,6 +301,76 @@ class Display {
         font.print(x_start, y_start, this, color, text, background);
     }
 
+    printf(x, y, font, ...args) {
+        // Parse arguments to determine which overload was called
+        // ESPHome has 5 printf overloads:
+        // 1. printf(x, y, font, color, background, align, format, ...)
+        // 2. printf(x, y, font, color, align, format, ...)
+        // 3. printf(x, y, font, color, format, ...)
+        // 4. printf(x, y, font, align, format, ...)
+        // 5. printf(x, y, font, format, ...)
+
+        let color = this.COLOR_ON;
+        let background = this.COLOR_OFF;
+        let align = Font.TOP_LEFT;
+        let format;
+        let formatArgs = [];
+
+        if (args.length === 0) {
+            console.error("printf: No arguments provided");
+            return;
+        }
+
+        // Detect which overload based on argument types
+        let argIndex = 0;
+
+        // Check if first arg is a Color object (has r, g, b properties)
+        if (args[argIndex] && typeof args[argIndex] === 'object' && 'r' in args[argIndex]) {
+            color = args[argIndex++];
+
+            // Check if next arg is also a Color (background color) or a number (align)
+            if (argIndex < args.length) {
+                if (typeof args[argIndex] === 'object' && 'r' in args[argIndex]) {
+                    // Has background color, must have align next
+                    background = args[argIndex++];
+                    if (argIndex < args.length && typeof args[argIndex] === 'number') {
+                        align = args[argIndex++];
+                    }
+                } else if (typeof args[argIndex] === 'number') {
+                    // This is align
+                    align = args[argIndex++];
+                }
+            }
+        } else if (typeof args[argIndex] === 'number') {
+            // First arg is a number, must be align
+            align = args[argIndex++];
+        }
+
+        // Rest of args are format string and format arguments
+        if (argIndex < args.length) {
+            format = String(args[argIndex++]);
+            formatArgs = args.slice(argIndex);
+        } else {
+            console.error("printf: No format string provided");
+            return;
+        }
+
+        // Apply format substitution
+        let text = format;
+        if (formatArgs.length > 0) {
+            let formatArgIndex = 0;
+            text = format.replace(/%[sd%]/g, (match) => {
+                if (match === '%%') return '%';
+                if (formatArgIndex < formatArgs.length) {
+                    return String(formatArgs[formatArgIndex++]);
+                }
+                return match;
+            });
+        }
+
+        this.print(x, y, font, color, align, text, background);
+    }
+
     image(x, y, image, arg4 = null, arg5 = null, arg6 = null) {
         let align = Image.TOP_LEFT;
         let color_on = this.COLOR_ON;

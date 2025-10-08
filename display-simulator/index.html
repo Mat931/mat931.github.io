@@ -90,22 +90,6 @@ class CanvasDisplay extends DisplayBuffer {
         this.ctx.fillStyle = `rgb(${color.r} ${color.g} ${color.b})`;
         this.ctx.fillRect(x * this.scale + this.pixel_border, y * this.scale + this.pixel_border, this.scale - 2 * this.pixel_border, this.scale - 2 * this.pixel_border);
     }
-    printf(x, y, font, color, align, format, ...args) {
-        // Simple printf implementation - just treat format as a string for now
-        let text = format;
-        if (typeof format === 'string' && args.length > 0) {
-            // Basic string substitution for common printf patterns
-            let argIndex = 0;
-            text = format.replace(/%[sd%]/g, (match) => {
-                if (match === '%%') return '%';
-                if (argIndex < args.length) {
-                    return String(args[argIndex++]);
-                }
-                return match;
-            });
-        }
-        this.print(x, y, font, color, align, text);
-    }
 }
 
 class ResourceManager {
