@@ -135,7 +135,6 @@ class ResourceManager {
                 let content = readerEvent.target.result;
                 this.file_input.value = "";
                 let data_arrays = this.load_data_arrays(content);
-                let glyphdata_arrays = this.load_glyphdata_arrays
                 let count = this.load_images(content, data_arrays);
                 count += this.load_fonts(content, data_arrays);
                 if (count == 0) {
